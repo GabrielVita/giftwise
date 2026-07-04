@@ -1,15 +1,11 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
 }
-
-// ==========================================
-// ENUMS (All in English & Clean)
-// ==========================================
 
 enum Gender {
   MALE
@@ -34,9 +30,7 @@ enum AccessLevel {
   ANYONE
 }
 
-// ==========================================
 // MODELS
-// ==========================================
 
 model User {
   id            String    @id @default(cuid())
