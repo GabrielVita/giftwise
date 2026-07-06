@@ -26,3 +26,24 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Quando o tema for LIGHT (comum) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #18181b !important; /* zinc-900 */
+  /* Injeta uma sombra interna branca para esconder o fundo do navegador */
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Quando o tema for DARK (Garante que herda o cinza do seu formulário) */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fafafa !important; /* zinc-50 */
+  /* Injeta uma sombra interna com a cor exata do seu container escuro (zinc-900/40 ou semelhante) */
+  -webkit-box-shadow: 0 0 0px 1000px #18181b inset !important; 
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: #fafafa;
+}

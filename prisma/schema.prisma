@@ -1,9 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
 }
 
-generator client {
-  provider = "prisma-client-js"
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  username       String         @unique
+  password       String
+  name           String
+  avatar         String?
+  gender         Gender         @default(UNISEX)
+  birthDate      DateTime?
+  createdAt      DateTime       @default(now())
+  createdGifts   Gift[]         @relation("GiftCreator")
+  playlists      Playlist[]     @relation("PlaylistCreator")
+  suggestedGifts PlaylistGift[]
+  adminPlaylists Playlist[]     @relation("PlaylistAdmins")
+  User_A         User[]         @relation("UserFriends")
+  User_B         User[]         @relation("UserFriends")
+  hobbies        Hobby[]        @relation("UserHobbies")
+  wishlist       Gift[]         @relation("UserWishlist")
+}
+
+model Hobby {
+  id    String @id @default(cuid())
+  name  String @unique
+  gifts Gift[] @relation("GiftHobbies")
+  users User[] @relation("UserHobbies")
+}
+
+model Playlist {
+  id              String         @id @default(cuid())
+  title           String
+  isPublic        Boolean        @default(false)
+  accessLevel     AccessLevel    @default(ONLY_HOST)
+  giftDate        DateTime?
+  creatorId       String
+  recipientUserId String?
+  recipientName   String
+  gender          Gender         @default(UNISEX)
+  ageGroup        AgeGroup
+  chosenGiftId    String?        @unique
+  createdAt       DateTime       @default(now())
+  chosenGift      Gift?          @relation("PlaylistChosenGift", fields: [chosenGiftId], references: [id])
+  creator         User           @relation("PlaylistCreator", fields: [creatorId], references: [id])
+  playlistGifts   PlaylistGift[]
+  admins          User[]         @relation("PlaylistAdmins")
+}
+
+model PlaylistGift {
+  id         String   @id @default(cuid())
+  playlistId String
+  giftId     String
+  addedById  String
+  createdAt  DateTime @default(now())
+  addedBy    User     @relation(fields: [addedById], references: [id])
+  gift       Gift     @relation(fields: [giftId], references: [id], onDelete: Cascade)
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, giftId])
+}
+
+model Gift {
+  id                String         @id @default(cuid())
+  title             String
+  description       String
+  image             String?
+  targetGender      Gender         @default(UNISEX)
+  ageGroups         AgeGroup[]
+  creatorId         String?
+  createdAt         DateTime       @default(now())
+  creator           User?          @relation("GiftCreator", fields: [creatorId], references: [id])
+  chosenInPlaylists Playlist?      @relation("PlaylistChosenGift")
+  inPlaylists       PlaylistGift[]
+  hobbies           Hobby[]        @relation("GiftHobbies")
+  likedBy           User[]         @relation("UserWishlist")
 }
 
 enum Gender {
@@ -13,135 +88,18 @@ enum Gender {
 }
 
 enum AgeGroup {
-  BABY              // 0 - 2 years
-  TODDLER           // 3 - 5 years
-  CHILD             // 6 - 10 years
-  PRE_TEEN          // 11 - 13 years
-  TEENAGER          // 14 - 17 years
-  YOUNG_ADULT       // 18 - 25 years
-  ADULT             // 26 - 50 years
-  SENIOR            // 51+ years
+  BABY
+  TODDLER
+  CHILD
+  PRE_TEEN
+  TEENAGER
+  YOUNG_ADULT
+  ADULT
+  SENIOR
 }
 
 enum AccessLevel {
   ONLY_HOST
   ADMINS
   ANYONE
-}
-
-// MODELS
-
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  username      String    @unique
-  password      String
-  name          String
-  avatar        String?   @db.Text
-  gender        Gender    @default(UNISEX)
-  birthDate     DateTime?
-
-  // Many-to-Many Relationships (Hobbies)
-  hobbies       Hobby[]   @relation("UserHobbies")
-
-  // Friend System (Self-relation)
-  friends       User[]    @relation("UserFriends")
-  friendOf      User[]    @relation("UserFriends")
-
-  // Playlists created by this user (Host)
-  playlists     Playlist[] @relation("PlaylistCreator")
-
-  // Playlists where this user is an Admin/Collaborator
-  adminPlaylists Playlist[] @relation("PlaylistAdmins")
-
-  // Gifts suggested by this user in friends' playlists
-  suggestedGifts PlaylistGift[]
-
-  // Catalog: Gifts registered by this user (Collaborative)
-  createdGifts  Gift[]    @relation("GiftCreator")
-
-  // Wishlist / Liked Gifts (Global gifts favorited by the user)
-  wishlist      Gift[]    @relation("UserWishlist")
-
-  createdAt     DateTime  @default(now())
-}
-
-model Hobby {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  
-  users     User[]   @relation("UserHobbies")
-  gifts     Gift[]   @relation("GiftHobbies")
-}
-
-model Playlist {
-  id              String       @id @default(cuid())
-  title           String       // E.g., "João's Birthday"
-  isPublic        Boolean      @default(false)
-  accessLevel     AccessLevel  @default(ONLY_HOST)
-  giftDate        DateTime?    // The day of the event
-  
-  // Host/Creator
-  creatorId       String
-  creator         User         @relation("PlaylistCreator", fields: [creatorId], references: [id])
-
-  // Recipient info
-  recipientUserId String?
-  recipientName   String       
-  gender          Gender       @default(UNISEX)
-  ageGroup        AgeGroup     
-
-  // Collaborators
-  admins          User[]       @relation("PlaylistAdmins")
-
-  // The final chosen gift (Only 1 allowed per playlist)
-  chosenGiftId    String?      @unique 
-  chosenGift      Gift?        @relation("PlaylistChosenGift", fields: [chosenGiftId], references: [id])
-
-  // Gifts added to this playlist
-  playlistGifts   PlaylistGift[]
-
-  createdAt       DateTime     @default(now())
-}
-
-// Pivot table to track WHO added the gift to the playlist
-model PlaylistGift {
-  id         String   @id @default(cuid())
-  playlistId String
-  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  giftId     String
-  gift       Gift     @relation(fields: [giftId], references: [id], onDelete: Cascade)
-  addedById  String
-  addedBy    User     @relation(fields: [addedById], references: [id])
-
-  createdAt  DateTime @default(now())
-
-  @@unique([playlistId, giftId]) // Prevents duplicate gifts in the same playlist
-}
-
-model Gift {
-  id           String         @id @default(cuid())
-  title        String
-  description  String
-  image        String?        @db.Text
-  targetGender Gender         @default(UNISEX)
-  
-  // Compatible age groups
-  ageGroups    AgeGroup[]
-
-  // Relationships
-  hobbies      Hobby[]        @relation("GiftHobbies")
-  likedBy      User[]         @relation("UserWishlist")
-  
-  // Who created this gift in the global catalog
-  creatorId    String?
-  creator      User?          @relation("GiftCreator", fields: [creatorId], references: [id])
-
-  // Where this gift was chosen as the final match
-  chosenInPlaylists Playlist[] @relation("PlaylistChosenGift")
-
-  // Playlists where this gift was suggested
-  inPlaylists  PlaylistGift[]
-
-  createdAt    DateTime       @default(now())
 }
