@@ -63,11 +63,8 @@ export default function Cadastro() {
         body: JSON.stringify(formData),
       });
 
-      // 1. Verifica o Content-Type para saber se a resposta é REALMENTE um JSON
       const contentType = response.headers.get("content-type");
-      
       if (!contentType || !contentType.includes("application/json")) {
-        // Se o servidor devolveu HTML (erro 404, 500 interno, rota errada), tratamos graciosamente
         throw new Error("O servidor respondeu de forma inesperada. Verifique se a rota da API está configurada.");
       }
 
@@ -77,10 +74,16 @@ export default function Cadastro() {
         throw new Error(data.error || "Erro ao criar conta.");
       }
 
-      alert("Conta criada com sucesso!");
-      // TODO: Redirecionar para login
+      // 📝 Registro bem-sucedido!
+      // Quando criarmos o sistema de sessão (ex: NextAuth ou JWT), aqui salvaremos os dados do usuário.
+      
+      alert(`Conta criada com sucesso para: ${data.user.name}!`);
+
+      // 💡 O fluxo ideal: Redirecionar para escolher hobbies
+      // Como ainda não criamos a rota /onboarding/hobbies, vamos deixar comentado para o teste não quebrar em um 404.
+      // router.push("/onboarding/hobbies");
+
     } catch (err: any) {
-      // Se caiu aqui por causa do JSON inválido ou falha de rede, a mensagem será amigável
       setApiError(err.message || "Não foi possível conectar ao servidor. Tente novamente mais tarde.");
     } finally {
       setLoading(false);

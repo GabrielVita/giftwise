@@ -81,6 +81,16 @@ model Gift {
   likedBy           User[]         @relation("UserWishlist")
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt BigInt
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
 enum Gender {
   MALE
   FEMALE
